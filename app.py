@@ -4,7 +4,7 @@ from textblob import TextBlob
 import pandas as pd
 
 # Change it to your OpenAI API key
-openai.api_key = 'sk-proj-D45XdyNV4OfOrd0F4biyT3BlbkFJudR5MReqbA6xKyZbNkP1'
+openai.api_key = 'API_KEY_HERE'
 
 # Function to generate a response from GPT-3.5-turbo
 def generate_response(prompt):
