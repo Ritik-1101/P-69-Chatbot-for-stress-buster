@@ -4,6 +4,8 @@ from transformers import pipeline
 import pandas as pd
 import streamlit_authenticator as stauth
 import sqlite3
+import requests
+import matplotlib.pyplot as plt
 
 # User authentication
 names = ["John Doe", "Jane Doe"]
@@ -45,7 +47,7 @@ conn.commit()
 
 if authentication_status:
     # Change it to your OpenAI API key
-    openai.api_key = 'KEY'
+    openai.api_key = 'YOUR_OPENAI_API_KEY'
 
     # Function to generate a response from GPT-3.5-turbo
     def generate_response(prompt):
@@ -83,7 +85,7 @@ if authentication_status:
             return "Neutral", score
 
     # Provide coping strategies
-    def provide_coping_strategy(sentiment):
+    def provide_coping_strategy(sentiment, user_history):
         strategies = {
             "Very Positive": "Keep up the positive vibes! Consider sharing your good mood with others.",
             "Positive": "It's great to see you're feeling positive. Keep doing what you're doing!",
@@ -91,7 +93,21 @@ if authentication_status:
             "Negative": "It seems you're feeling down. Try to take a break and do something relaxing.",
             "Very Negative": "I'm sorry to hear that you're feeling very negative. Consider talking to a friend or seeking professional help."
         }
+        # Personalize based on user history
+        if sentiment in user_history:
+            strategies["Positive"] += " Remember last time you enjoyed a walk in the park?"
         return strategies.get(sentiment, "Keep going, you're doing great!")
+
+    # Integrate with external APIs for more resources
+    def get_external_resources():
+        try:
+            response = requests.get("https://api.mentalhealth.com/resources")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return []
+        except requests.exceptions.RequestException as e:
+            return f"An error occurred: {str(e)}"
 
     # Streamlit app layout
     st.title("Mental Health Support Chatbot")
@@ -118,6 +134,8 @@ if authentication_status:
         st.session_state['messages'] = []
     if 'mood_tracker' not in st.session_state:
         st.session_state['mood_tracker'] = []
+    if 'user_history' not in st.session_state:
+        st.session_state['user_history'] = []
 
     # Load previous chat history
     c.execute("SELECT sender, message FROM messages WHERE username=? ORDER BY timestamp", (username,))
@@ -141,12 +159,13 @@ if authentication_status:
         st.session_state['messages'].append(("You", user_message))
         
         sentiment, score = analyze_sentiment(user_message)
-        coping_strategy = provide_coping_strategy(sentiment)
+        coping_strategy = provide_coping_strategy(sentiment, st.session_state['user_history'])
         
         response = generate_response(user_message)
         
         st.session_state['messages'].append(("Bot", response))
         st.session_state['mood_tracker'].append((user_message, sentiment, score))
+        st.session_state['user_history'].append(sentiment)
 
         # Store messages in the database
         c.execute("INSERT INTO messages (username, sender, message, sentiment, polarity) VALUES (?, ?, ?, ?, ?)", 
@@ -169,6 +188,16 @@ if authentication_status:
         mood_data = pd.DataFrame(st.session_state['mood_tracker'], columns=["Message", "Sentiment", "Score"])
         st.line_chart(mood_data['Score'])
 
+        # Additional visualizations
+        st.subheader("Advanced Visualizations")
+        fig, ax = plt.subplots()
+        mood_data['Sentiment'].value_counts().plot(kind='bar', ax=ax, title='Sentiment Distribution')
+        st.pyplot(fig)
+
+        fig, ax = plt.subplots()
+        mood_data.groupby('Sentiment')['Score'].mean().plot(kind='pie', autopct='%1.1f%%', ax=ax, title='Average Sentiment Scores')
+        st.pyplot(fig)
+
     # Display coping strategies
     if submit_button and (user_message or selected_question):
         st.subheader("Suggested Coping Strategy")
@@ -187,8 +216,15 @@ if authentication_status:
         conn.commit()
         st.success("Thank you for your feedback!")
 
-    # Display resources
+    # Display resources from external API
     st.sidebar.title("Resources")
+    resources = get_external_resources()
+    if resources:
+        for resource in resources:
+            st.sidebar.write(f"{resource['name']}: {resource['contact']}")
+    else:
+        st.sidebar.write("No additional resources available at the moment.")
+
     st.sidebar.write("If you need immediate help, please contact one of the following resources:")
     st.sidebar.write("1. National Suicide Prevention Lifeline: 1-800-273-8255")
     st.sidebar.write("2. Crisis Text Line: Text 'HELLO' to 741741")
