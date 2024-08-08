@@ -3,6 +3,7 @@ import openai
 from transformers import pipeline
 import pandas as pd
 import streamlit_authenticator as stauth
+import sqlite3
 
 # User authentication
 names = ["John Doe", "Jane Doe"]
@@ -13,6 +14,34 @@ hashed_passwords = stauth.Hasher(passwords).generate()
 
 authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "chatbot_app", "abcdef", cookie_expiry_days=30)
 name, authentication_status, username = authenticator.login("Login", "main")
+
+# Database setup
+conn = sqlite3.connect('chatbot.db')
+c = conn.cursor()
+
+# Create tables if they do not exist
+c.execute('''
+CREATE TABLE IF NOT EXISTS messages (
+    username TEXT,
+    sender TEXT,
+    message TEXT,
+    sentiment TEXT,
+    polarity REAL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+''')
+
+c.execute('''
+CREATE TABLE IF NOT EXISTS feedback (
+    username TEXT,
+    message TEXT,
+    feedback TEXT,
+    rating INTEGER,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+''')
+
+conn.commit()
 
 if authentication_status:
     # Change it to your OpenAI API key
@@ -90,6 +119,11 @@ if authentication_status:
     if 'mood_tracker' not in st.session_state:
         st.session_state['mood_tracker'] = []
 
+    # Load previous chat history
+    c.execute("SELECT sender, message FROM messages WHERE username=? ORDER BY timestamp", (username,))
+    rows = c.fetchall()
+    st.session_state['messages'] = [(row[0], row[1]) for row in rows]
+
     # Pre-defined questions
     predefined_questions = ["How are you feeling today?", "Do you want to talk about your day?", "Is there something bothering you?"]
 
@@ -114,6 +148,13 @@ if authentication_status:
         st.session_state['messages'].append(("Bot", response))
         st.session_state['mood_tracker'].append((user_message, sentiment, score))
 
+        # Store messages in the database
+        c.execute("INSERT INTO messages (username, sender, message, sentiment, polarity) VALUES (?, ?, ?, ?, ?)", 
+                  (username, "You", user_message, sentiment, score))
+        c.execute("INSERT INTO messages (username, sender, message) VALUES (?, ?, ?)", 
+                  (username, "Bot", response))
+        conn.commit()
+
     # Display chat messages
     st.subheader("Chat")
     for sender, message in st.session_state['messages']:
@@ -132,6 +173,19 @@ if authentication_status:
     if submit_button and (user_message or selected_question):
         st.subheader("Suggested Coping Strategy")
         st.write(coping_strategy)
+
+    # Display feedback form
+    st.subheader("Feedback")
+    with st.form(key='feedback_form'):
+        feedback_message = st.text_area("Feedback on the last response:")
+        rating = st.slider("Rate the response", 1, 5, 3)
+        submit_feedback_button = st.form_submit_button(label='Submit Feedback')
+
+    if submit_feedback_button and feedback_message:
+        c.execute("INSERT INTO feedback (username, message, feedback, rating) VALUES (?, ?, ?, ?)", 
+                  (username, feedback_message, feedback_message, rating))
+        conn.commit()
+        st.success("Thank you for your feedback!")
 
     # Display resources
     st.sidebar.title("Resources")
