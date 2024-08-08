@@ -1,11 +1,15 @@
 import streamlit as st
 import openai
-from transformers import pipeline
 import pandas as pd
 import streamlit_authenticator as stauth
 import sqlite3
 import requests
 import matplotlib.pyplot as plt
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import nltk
+
+# Download the VADER lexicon
+nltk.download('vader_lexicon')
 
 # User authentication
 names = ["John Doe", "Jane Doe"]
@@ -14,7 +18,25 @@ passwords = ["password123", "password456"]
 
 hashed_passwords = stauth.Hasher(passwords).generate()
 
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "chatbot_app", "abcdef", cookie_expiry_days=30)
+credentials = {
+    "usernames": {
+        "johndoe": {
+            "name": "John Doe",
+            "password": hashed_passwords[0]
+        },
+        "janedoe": {
+            "name": "Jane Doe",
+            "password": hashed_passwords[1]
+        }
+    }
+}
+
+authenticator = stauth.Authenticate(
+    credentials,
+    "chatbot_app",
+    "abcdef",
+    cookie_expiry_days=30
+)
 name, authentication_status, username = authenticator.login("Login", "main")
 
 # Database setup
@@ -53,7 +75,7 @@ if authentication_status:
     def generate_response(prompt):
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo-1106",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
@@ -66,23 +88,22 @@ if authentication_status:
             return f"An unexpected error occurred: {str(e)}"
 
     # Initialize sentiment analysis model
-    sentiment_analysis = pipeline("sentiment-analysis")
+    vader = SentimentIntensityAnalyzer()
 
     # Analyze sentiment
     def analyze_sentiment(text):
-        result = sentiment_analysis(text)[0]
-        label = result['label']
-        score = result['score']
-        if label == 'POSITIVE' and score > 0.75:
+        result = vader.polarity_scores(text)
+        score = result['compound']
+        if score >= 0.5:
             return "Very Positive", score
-        elif label == 'POSITIVE' and score > 0.5:
+        elif 0.1 <= score < 0.5:
             return "Positive", score
-        elif label == 'NEGATIVE' and score > 0.75:
-            return "Very Negative", score
-        elif label == 'NEGATIVE' and score > 0.5:
+        elif -0.1 < score < 0.1:
+            return "Neutral", score
+        elif -0.5 < score <= -0.1:
             return "Negative", score
         else:
-            return "Neutral", score
+            return "Very Negative", score
 
     # Provide coping strategies
     def provide_coping_strategy(sentiment, user_history):
@@ -195,7 +216,7 @@ if authentication_status:
         st.pyplot(fig)
 
         fig, ax = plt.subplots()
-        mood_data.groupby('Sentiment')['Score'].mean().plot(kind='pie', autopct='%1.1f%%', ax=ax, title='Average Sentiment Scores')
+        mood_data.groupby('Sentiment')['Score'].mean().plot(kind='bar', ax=ax, title='Average Sentiment Scores')
         st.pyplot(fig)
 
     # Display coping strategies
@@ -211,7 +232,7 @@ if authentication_status:
         submit_feedback_button = st.form_submit_button(label='Submit Feedback')
 
     if submit_feedback_button and feedback_message:
-        c.execute("INSERT INTO feedback (username, message, feedback, rating) VALUES (?, ?, ?, ?)", 
+        c.execute("INSERT INTO feedback (username, message, feedback, rating) VALUES (?, ?, ?, ?, ?)", 
                   (username, feedback_message, feedback_message, rating))
         conn.commit()
         st.success("Thank you for your feedback!")
