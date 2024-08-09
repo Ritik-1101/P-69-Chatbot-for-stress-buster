@@ -109,10 +109,6 @@ Feel free to fork this repository, submit issues, or create pull requests. Contr
 3. Yashi Nisar
 4. Prerak Shah
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgements
 
 - [OpenAI GPT-3.5-turbo](https://beta.openai.com/)
