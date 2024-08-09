@@ -1,0 +1,124 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+#chat-container {
+    width: 400px;
+    max-width: 100%;
+    background-color: #f7f9fc;
+    border-radius: 25px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-header {
+    background-color: #2a9d8f;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 4px solid #e9c46a;
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+}
+
+#bot-avatar img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 15px;
+    border: 3px solid #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#bot-details h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+#chat-box {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f7f9fc;
+}
+
+.message {
+    display: flex;
+    margin-bottom: 20px;
+    animation: slideUp 0.3s ease-out;
+}
+
+.message.bot .message-content {
+    background-color: #2a9d8f;
+    color: #ffffff;
+    border-radius: 15px 15px 15px 0;
+}
+
+.message-content {
+    padding: 15px 20px;
+    max-width: 70%;
+    font-size: 14px;
+    line-height: 1.6;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#message-input {
+    display: flex;
+    padding: 20px;
+    background-color: #ffffff;
+    border-top: 2px solid #e9c46a;
+}
+
+#message-input input {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid #e1e8f0;
+    border-radius: 30px;
+    font-size: 14px;
+    outline: none;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.3s;
+}
+
+#message-input input:focus {
+    border-color: #2a9d8f;
+}
+
+#message-input button {
+    background-color: #e76f51;
+    color: #fff;
+    border: none;
+    padding: 15px 20px;
+    margin-left: 10px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#message-input button:hover {
+    background-color: #d65a3f;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

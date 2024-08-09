@@ -1,0 +1,115 @@
+body {
+    background: linear-gradient(to bottom right, #6cbf84, #4e8bd3); /* Green to Blue Gradient */
+    font-family: Arial, sans-serif;
+  }
+  
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .login-form {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+  }
+  
+  .login-logo {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+  }
+  
+  .form-control {
+    border-radius: 25px;
+  }
+  
+  .btn-primary {
+    border-radius: 25px;
+    padding: 10px 20px;
+  }
+  
+  .social-buttons .btn {
+    margin: 0 5px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    outline: none;
+  }
+  
+  .btn-facebook {
+    background-color: #1877F2; 
+  }
+  
+.btn-google {
+    background-color: white; 
+    color: #4285F4; 
+    border: 2px solid #4285F4; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+  }
+  
+  .btn-google i {
+    background: linear-gradient(to right, #4285F4 0%, #4285F4 25%, #34A853 25%, #34A853 50%, #FBBC05 50%, #FBBC05 75%, #EA4335 75%, #EA4335 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+   
+  .btn-instagram {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    color: white;
+  }
+  
+  .btn-facebook i {
+    color: white;
+  }
+  
+  .btn-instagram i {
+    color: white;
+  }
+  
+  .btn:hover {
+    opacity: 0.8;
+  }
+  
+  .divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .divider::before,
+  .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #eee;
+  }
+  
+  .divider::before {
+    margin-right: .25em;
+  }
+  
+  .divider::after {
+    margin-left: .25em;
+  }
+  
+  @media (max-width: 768px) {
+    .login-container {
+      flex-direction: column;
+    }
+    .login-form {
+      width: 90%;
+    }
+  }
+  
