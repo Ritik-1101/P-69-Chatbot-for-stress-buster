@@ -122,4 +122,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 **Disclaimer**: This chatbot is intended for stress relief and is not a substitute for professional mental health care. If you are experiencing a mental health crisis, please seek immediate help from a qualified professional or contact a mental health hotline.
-```
