@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 conn.commit()
 
 # Set your OpenAI API key
-openai.api_key = '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'  # Ensure this is your actual API key
+openai.api_key = 'YOUR_OPENAI_API_KEY'  # Ensure this is your actual API key
 
 # Function to generate a response from GPT-3.5-turbo
 def generate_response(prompt):
@@ -86,7 +86,7 @@ def provide_coping_strategy(sentiment):
     return strategies.get(sentiment, "Keep going, you're doing great!")
 
 # Streamlit app layout
-st.title("Mental Health Support Chatbot")
+st.title("ChatBot For Stress Buster")
 
 # Initialize session state
 if 'messages' not in st.session_state:
