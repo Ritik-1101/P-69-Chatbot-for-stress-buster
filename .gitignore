@@ -65,6 +65,8 @@ __pypackages__/
 # dotenv
 .env
 .venv
+.myenv
+myenv
 env.bak/
 venv.bak/
 .env.local
