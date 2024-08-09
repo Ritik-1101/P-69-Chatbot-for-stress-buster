@@ -1,16 +1,19 @@
-import streamlit as st
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import openai
 import pandas as pd
 import sqlite3
-import requests
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
+
+# Initialize Flask app
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Necessary for session management
 
 # Download the VADER lexicon
 nltk.download('vader_lexicon')
 
 # Database setup
-conn = sqlite3.connect('chatbot.db')
+conn = sqlite3.connect('chatbot.db', check_same_thread=False)
 c = conn.cursor()
 
 # Create tables if they do not exist
@@ -85,77 +88,65 @@ def provide_coping_strategy(sentiment):
     }
     return strategies.get(sentiment, "Keep going, you're doing great!")
 
-# Streamlit app layout
-st.title("ChatBot For Stress Buster")
+# Home route to handle chat
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if 'messages' not in session:
+        session['messages'] = []
+    if 'mood_tracker' not in session:
+        session['mood_tracker'] = []
 
-# Initialize session state
-if 'messages' not in st.session_state:
-    st.session_state['messages'] = []
-if 'mood_tracker' not in st.session_state:
-    st.session_state['mood_tracker'] = []
+    if request.method == 'POST':
+        user_message = request.form['user_message']
+        if user_message:
+            session['messages'].append(("You", user_message))
+            
+            sentiment, score = analyze_sentiment(user_message)
+            coping_strategy = provide_coping_strategy(sentiment)
+            
+            response = generate_response(user_message)
+            
+            session['messages'].append(("Bot", response))
+            session['mood_tracker'].append((user_message, sentiment, score))
 
-# Chat input form
-user_message = st.text_input("You:", placeholder="Type your message here...")
-submit_button = st.button(label='Send')
+            # Store messages in the database
+            c.execute("INSERT INTO messages (sender, message, sentiment, polarity) VALUES (?, ?, ?, ?)", 
+                      ("You", user_message, sentiment, score))
+            c.execute("INSERT INTO messages (sender, message) VALUES (?, ?)", 
+                      ("Bot", response))
+            conn.commit()
 
-# Handle form submission
-if submit_button and user_message:
-    st.session_state['messages'].append(("You", user_message))
-    
-    sentiment, score = analyze_sentiment(user_message)
-    coping_strategy = provide_coping_strategy(sentiment)
-    
-    response = generate_response(user_message)
-    
-    st.session_state['messages'].append(("Bot", response))
-    st.session_state['mood_tracker'].append((user_message, sentiment, score))
+            return render_template('chatbot.html', messages=session['messages'], coping_strategy=coping_strategy)
 
-    # Store messages in the database
-    c.execute("INSERT INTO messages (sender, message, sentiment, polarity) VALUES (?, ?, ?, ?)", 
-              ("You", user_message, sentiment, score))
-    c.execute("INSERT INTO messages (sender, message) VALUES (?, ?)", 
-              ("Bot", response))
-    conn.commit()
+    return render_template('chatbot.html', messages=session['messages'])
 
-# Display chat messages
-st.subheader("Chat")
-for sender, message in st.session_state['messages']:
-    st.write(f"**{sender}:** {message}")
+# Feedback route
+@app.route('/feedback', methods=['POST'])
+def feedback():
+    feedback_message = request.form['feedback_message']
+    rating = request.form['rating']
+    if feedback_message:
+        c.execute("INSERT INTO feedback (message, feedback, rating) VALUES (?, ?, ?)", 
+                  (feedback_message, feedback_message, rating))
+        conn.commit()
+        return jsonify({"status": "success", "message": "Thank you for your feedback!"})
 
-# Display mood tracking chart
-if st.session_state['mood_tracker']:
-    st.subheader("Mood Tracking")
-    mood_data = pd.DataFrame(st.session_state['mood_tracker'], columns=["Message", "Sentiment", "Score"])
-    st.line_chart(mood_data['Score'])
+    return jsonify({"status": "failure", "message": "Feedback not submitted."})
 
-# Display coping strategies
-if submit_button and user_message:
-    st.subheader("Suggested Coping Strategy")
-    st.write(coping_strategy)
+# Resources route
+@app.route('/resources')
+def resources():
+    resources = [
+        "National Suicide Prevention Lifeline: 1-800-273-8255",
+        "Crisis Text Line: Text 'HELLO' to 741741",
+        "More Resources: https://www.mentalhealth.gov/get-help/immediate-help"
+    ]
+    return render_template('resources.html', resources=resources)
 
-# Display feedback form
-st.subheader("Feedback")
-feedback_message = st.text_area("Feedback on the last response:")
-rating = st.slider("Rate the response", 1, 5, 3)
-submit_feedback_button = st.button(label='Submit Feedback')
+# Session summary route
+@app.route('/session_summary')
+def session_summary():
+    return render_template('session_summary.html', mood_tracker=session.get('mood_tracker', []))
 
-if submit_feedback_button and feedback_message:
-    c.execute("INSERT INTO feedback (message, feedback, rating) VALUES (?, ?, ?)", 
-              (feedback_message, feedback_message, rating))
-    conn.commit()
-    st.success("Thank you for your feedback!")
-
-# Display resources from external API
-st.sidebar.title("Resources")
-st.sidebar.write("If you need immediate help, please contact one of the following resources:")
-st.sidebar.write("1. National Suicide Prevention Lifeline: 1-800-273-8255")
-st.sidebar.write("2. Crisis Text Line: Text 'HELLO' to 741741")
-st.sidebar.write("[More Resources](https://www.mentalhealth.gov/get-help/immediate-help)")
-
-# Display session summary
-if st.sidebar.button("Show Session Summary"):
-    st.sidebar.subheader("Session Summary")
-    for i, (message, sentiment, score) in enumerate(st.session_state['mood_tracker']):
-        st.sidebar.write(f"{i+1}. **Message:** {message}")
-        st.sidebar.write(f"**Sentiment:** {sentiment} (Score: {score})")
-        st.sidebar.write("---")
+if __name__ == '__main__':
+    app.run(debug=True)

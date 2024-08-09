@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot for Stress Buster</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="chat-container">
+        <div id="chat-header">
+            <div id="bot-avatar">
+                <img src="{{ url_for('static', filename='assets/stress_relief.jpg') }}" alt="Bot Avatar">
+            </div>
+            <div id="bot-details">
+                <h2>Chatbot for Stress Buster</h2>
+            </div>
+        </div>
+        <div id="chat-box">
+            {% for sender, message in messages %}
+                <div class="message {{ 'bot' if sender == 'Bot' else 'user' }}">
+                    <div class="message-content">
+                        <strong>{{ sender }}:</strong> {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div id="message-input">
+            <form method="POST">
+                <input type="text" name="user_message" placeholder="Type a message..." required>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
