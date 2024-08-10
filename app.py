@@ -4,6 +4,10 @@ import pandas as pd
 import sqlite3
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
+import os 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -39,7 +43,8 @@ CREATE TABLE IF NOT EXISTS feedback (
 conn.commit()
 
 # Set your OpenAI API key
-openai.api_key = 'YOUR_OPENAI_API_KEY'  # Ensure this is your actual API key
+openai_api_key = os.getenv('OPENAI_API_KEY')
+openai.api_key = openai_api_key  # Ensure this is your actual API key
 
 # Function to generate a response from GPT-3.5-turbo
 def generate_response(prompt):
