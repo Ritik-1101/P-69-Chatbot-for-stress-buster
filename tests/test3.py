@@ -1,8 +1,15 @@
-def test_string_concat():
-    assert "Hello, " + "World!" == "Hello, World!"  
+# tests/test_model.py
 
-def test_string_length():
-    assert len("OpenAI") == 6  
+from model import train_model
 
-def test_string_failure():
-    assert len("OpenAI") == 7  
+def test_model_accuracy():
+    model, accuracy = train_model()
+    assert accuracy >= 0.8  # Expect the model to have at least 80% accuracy
+
+def test_model_not_none():
+    model, accuracy = train_model()
+    assert model is not None  # Ensure that the model is not None
+
+def test_model_accuracy_failure():
+    model, accuracy = train_model()
+    assert accuracy >= 0.95  # This test will fail if accuracy is below 95%
